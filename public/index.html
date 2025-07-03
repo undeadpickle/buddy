@@ -89,16 +89,26 @@
         
         Logger.info('Application starting up', { initialCharacter: currentCharacter });
         
-        // Character asset mappings
+        // Character asset mappings - CDN with local fallback
+        const CDN_BASE = 'https://undeadpickle.github.io/buddy/public/assets/characters';
+        const LOCAL_BASE = 'assets/characters';
+        
         const characters = {
-            'cat-dog-orange': 'assets/characters/cat-dog-orange/parts',
-            'kitten-ninja': 'assets/characters/kitten-ninja/parts',
-            'master-hamster': 'assets/characters/master-hamster/parts'
+            'cat-dog-orange': `${CDN_BASE}/cat-dog-orange/parts`,
+            'kitten-ninja': `${CDN_BASE}/kitten-ninja/parts`,
+            'master-hamster': `${CDN_BASE}/master-hamster/parts`
         };
         
-        // Asset loader function
-        function createAssetLoader(characterPath) {
-            Logger.info('Creating asset loader', { characterPath });
+        // Fallback mappings for local assets
+        const localCharacters = {
+            'cat-dog-orange': `${LOCAL_BASE}/cat-dog-orange/parts`,
+            'kitten-ninja': `${LOCAL_BASE}/kitten-ninja/parts`,
+            'master-hamster': `${LOCAL_BASE}/master-hamster/parts`
+        };
+        
+        // Asset loader function with CDN fallback
+        function createAssetLoader(characterPath, fallbackPath = null) {
+            Logger.info('Creating asset loader', { characterPath, fallbackPath });
             
             return async (asset, bytes) => {
                 // If asset has bytes, let runtime handle it
@@ -114,7 +124,16 @@
                     
                     try {
                         const startTime = performance.now();
-                        const response = await fetch(assetPath);
+                        let response = await fetch(assetPath);
+                        let usedFallback = false;
+                        
+                        // Try fallback if primary fails
+                        if (!response.ok && fallbackPath) {
+                            const fallbackAssetPath = `${fallbackPath}/${asset.name}.png`;
+                            Logger.warn('CDN failed, trying fallback', { assetName: asset.name, fallbackAssetPath });
+                            response = await fetch(fallbackAssetPath);
+                            usedFallback = true;
+                        }
                         
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -132,7 +151,8 @@
                         Logger.info('Asset loaded successfully', { 
                             assetName: asset.name, 
                             loadTime: `${loadTime.toFixed(2)}ms`,
-                            fileSize: `${(arrayBuffer.byteLength / 1024).toFixed(2)}KB`
+                            fileSize: `${(arrayBuffer.byteLength / 1024).toFixed(2)}KB`,
+                            usedFallback: usedFallback
                         });
                         
                         return true;
@@ -148,8 +168,8 @@
         }
         
         // Initialize Rive instance
-        function initializeRive(characterPath) {
-            Logger.info('Initializing Rive instance', { characterPath, currentCharacter });
+        function initializeRive(characterPath, fallbackPath = null) {
+            Logger.info('Initializing Rive instance', { characterPath, fallbackPath, currentCharacter });
             
             if (riveInstance) {
                 Logger.info('Cleaning up existing Rive instance');
@@ -172,7 +192,7 @@
                 }),
                 autoplay: true,
                 animations: ['gesture_wave'],
-                assetLoader: createAssetLoader(characterPath),
+                assetLoader: createAssetLoader(characterPath, fallbackPath),
                 onLoad: () => {
                     const loadTime = performance.now() - startTime;
                     Logger.info('Rive instance loaded successfully', {
@@ -214,8 +234,8 @@
             
             Logger.info('Switching character', { from: previousCharacter, to: currentCharacter });
             
-            // Reinitialize Rive with new character assets
-            initializeRive(characters[characterId]);
+            // Reinitialize Rive with new character assets and fallback
+            initializeRive(characters[characterId], localCharacters[characterId]);
         }
         
         // Add dropdown event listener
@@ -226,7 +246,7 @@
         
         // Initialize with first character
         Logger.info('Initializing application with default character');
-        initializeRive(characters[currentCharacter]);
+        initializeRive(characters[currentCharacter], localCharacters[currentCharacter]);
         
         // Log available characters
         Logger.info('Available characters', { characters: Object.keys(characters) });

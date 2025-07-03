@@ -19,31 +19,37 @@ This is a simple MVP web application for testing buddy characters using Rive ani
 
 ### Asset Loading Strategy
 - PNG files marked as "Referenced" in Rive editor
-- Local folders simulate external CDN structure
-- Asset loader handles dynamic PNG loading at runtime
-- Standard resolution only (no @2x, @3x loading)
+- **CDN Hosting**: Assets served from GitHub Pages CDN at `https://undeadpickle.github.io/buddy-assets-cdn/`
+- **Smart Fallback**: Automatically falls back to local assets if CDN fails
+- Asset loader handles dynamic PNG loading at runtime with performance tracking
+- Standard resolution only (no @2x, @3x loading currently used)
 
 ## Development Commands
 
 ### Local Development
 ```bash
 # Start local server
-python3 -m http.server 8000
+python3 -m http.server 8000 -d public
 
-# Access at http://localhost:8000/public/
+# Access at http://localhost:8000/
+# Alternative port if 8000 is in use
+python3 -m http.server 8001 -d public
 ```
 
 ### Testing
 - Test character switching via dropdown
 - Verify wave animation loops for each character
-- Check console for asset loading errors
+- Check console for asset loading errors and CDN performance
+- Monitor fallback behavior if CDN is unavailable
+- Verify assets load from CDN (check browser Network tab)
 
 ## Important Notes
 - Keep implementation minimal and simple
 - All characters use same bone rig and animations
 - Referenced assets enable dynamic character switching
 - Canvas size: 500x500px
-- Local asset folders act as CDN simulation
+- **CDN-First Architecture**: Assets load from external CDN with local fallback
+- **Performance Monitoring**: Console logs show load times and CDN vs fallback usage
 
 ## File Structure
 ```
@@ -51,9 +57,20 @@ buddy/
 ├── public/           # Web assets
 │   ├── assets/
 │   │   ├── rive/     # Rive animation files
-│   │   └── characters/ # Character PNG assets
-│   └── index.html    # Main application
+│   │   └── characters/ # Character PNG assets (local fallback)
+│   └── index.html    # Main application with CDN integration
+├── buddy-assets-cdn/ # CDN repository (GitHub Pages)
+│   ├── cat-dog-orange/
+│   ├── kitten-ninja/
+│   ├── master-hamster/
+│   └── index.html    # CDN directory listing
 ├── src/              # Source code (for future development)
 ├── docs/             # Documentation and screenshots
 └── README.md         # Project documentation
 ```
+
+## CDN Configuration
+- **CDN URL**: `https://undeadpickle.github.io/buddy-assets-cdn/`
+- **Asset Repository**: `https://github.com/undeadpickle/buddy-assets-cdn`
+- **Fallback Strategy**: Automatic fallback to local assets if CDN fails
+- **Performance Tracking**: Console logs show CDN vs fallback usage and load times
