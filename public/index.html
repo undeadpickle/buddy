@@ -71,8 +71,23 @@
     </div>
 
     <script>
+        // Simple logging utility
+        const Logger = {
+            info: (message, data = null) => {
+                console.log(`[BUDDY] ${new Date().toLocaleTimeString()} - ${message}`, data || '');
+            },
+            warn: (message, data = null) => {
+                console.warn(`[BUDDY] ${new Date().toLocaleTimeString()} - ${message}`, data || '');
+            },
+            error: (message, data = null) => {
+                console.error(`[BUDDY] ${new Date().toLocaleTimeString()} - ${message}`, data || '');
+            }
+        };
+        
         let riveInstance = null;
         let currentCharacter = 'cat-dog-orange';
+        
+        Logger.info('Application starting up', { initialCharacter: currentCharacter });
         
         // Character asset mappings
         const characters = {
@@ -83,17 +98,28 @@
         
         // Asset loader function
         function createAssetLoader(characterPath) {
+            Logger.info('Creating asset loader', { characterPath });
+            
             return async (asset, bytes) => {
                 // If asset has bytes, let runtime handle it
                 if (bytes.length > 0) {
+                    Logger.info('Asset has embedded bytes, letting runtime handle it', { assetName: asset.name });
                     return false;
                 }
                 
                 // Handle image assets
                 if (asset.isImage) {
+                    const assetPath = `${characterPath}/${asset.name}.png`;
+                    Logger.info('Loading image asset', { assetName: asset.name, assetPath });
+                    
                     try {
-                        const assetPath = `${characterPath}/${asset.name}.png`;
+                        const startTime = performance.now();
                         const response = await fetch(assetPath);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        
                         const arrayBuffer = await response.arrayBuffer();
                         const uint8Array = new Uint8Array(arrayBuffer);
                         
@@ -102,26 +128,40 @@
                         asset.setRenderImage(image);
                         image.unref();
                         
+                        const loadTime = performance.now() - startTime;
+                        Logger.info('Asset loaded successfully', { 
+                            assetName: asset.name, 
+                            loadTime: `${loadTime.toFixed(2)}ms`,
+                            fileSize: `${(arrayBuffer.byteLength / 1024).toFixed(2)}KB`
+                        });
+                        
                         return true;
                     } catch (error) {
-                        console.error(`Failed to load asset: ${asset.name}`, error);
+                        Logger.error('Failed to load asset', { assetName: asset.name, assetPath, error: error.message });
                         return false;
                     }
                 }
                 
+                Logger.warn('Asset type not handled', { assetName: asset.name, isImage: asset.isImage });
                 return false;
             };
         }
         
         // Initialize Rive instance
         function initializeRive(characterPath) {
+            Logger.info('Initializing Rive instance', { characterPath, currentCharacter });
+            
             if (riveInstance) {
+                Logger.info('Cleaning up existing Rive instance');
                 try {
                     riveInstance.cleanup();
+                    Logger.info('Rive instance cleanup successful');
                 } catch (error) {
-                    console.warn('Cleanup error:', error);
+                    Logger.warn('Cleanup error', { error: error.message });
                 }
             }
+            
+            const startTime = performance.now();
             
             riveInstance = new rive.Rive({
                 src: 'assets/rive/humanoid-buddies.riv',
@@ -134,20 +174,45 @@
                 animations: ['gesture_wave'],
                 assetLoader: createAssetLoader(characterPath),
                 onLoad: () => {
+                    const loadTime = performance.now() - startTime;
+                    Logger.info('Rive instance loaded successfully', {
+                        character: currentCharacter,
+                        loadTime: `${loadTime.toFixed(2)}ms`
+                    });
+                    
                     riveInstance.resizeDrawingSurfaceToCanvas();
-                    console.log(`Loaded character: ${currentCharacter}`);
+                    Logger.info('Canvas resized to match drawing surface');
+                    
+                    // Log animation state
+                    Logger.info('Animation started', { animation: 'gesture_wave', autoplay: true });
                 },
                 onLoadError: (error) => {
-                    console.error('Failed to load Rive file:', error);
+                    Logger.error('Failed to load Rive file', { error: error.message || error });
+                },
+                onLoop: () => {
+                    Logger.info('Animation loop completed', { animation: 'gesture_wave' });
                 }
             });
         }
         
         // Switch character function
         function switchCharacter(characterId) {
-            if (characterId === currentCharacter) return;
+            Logger.info('Character switch requested', { from: currentCharacter, to: characterId });
             
+            if (characterId === currentCharacter) {
+                Logger.info('Character switch ignored - same character already active');
+                return;
+            }
+            
+            if (!characters[characterId]) {
+                Logger.error('Invalid character ID provided', { characterId, availableCharacters: Object.keys(characters) });
+                return;
+            }
+            
+            const previousCharacter = currentCharacter;
             currentCharacter = characterId;
+            
+            Logger.info('Switching character', { from: previousCharacter, to: currentCharacter });
             
             // Reinitialize Rive with new character assets
             initializeRive(characters[characterId]);
@@ -155,11 +220,16 @@
         
         // Add dropdown event listener
         document.getElementById('character-select').addEventListener('change', (event) => {
+            Logger.info('Dropdown selection changed', { selectedValue: event.target.value });
             switchCharacter(event.target.value);
         });
         
         // Initialize with first character
+        Logger.info('Initializing application with default character');
         initializeRive(characters[currentCharacter]);
+        
+        // Log available characters
+        Logger.info('Available characters', { characters: Object.keys(characters) });
     </script>
 </body>
 </html>
