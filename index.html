@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buddy Characters</title>
+    <script src="https://unpkg.com/@rive-app/canvas@2.17.3/rive.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f0f0;
+        }
+        
+        #rive-canvas {
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: white;
+            margin-bottom: 20px;
+        }
+        
+        .character-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        select {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        
+        select:hover {
+            border-color: #4CAF50;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buddy Characters</h1>
+    <canvas id="rive-canvas" width="500" height="500"></canvas>
+    
+    <div class="character-selector">
+        <label for="character-select">Select Character:</label>
+        <select id="character-select">
+            <option value="cat-dog-orange">Cat Dog Orange</option>
+            <option value="kitten-ninja">Kitten Ninja</option>
+            <option value="master-hamster">Master Hamster</option>
+        </select>
+    </div>
+
+    <script>
+        let riveInstance = null;
+        let currentCharacter = 'cat-dog-orange';
+        
+        // Character asset mappings
+        const characters = {
+            'cat-dog-orange': 'assets/buddies/cat-dog-orange/parts',
+            'kitten-ninja': 'assets/buddies/kitten-ninja/parts',
+            'master-hamster': 'assets/buddies/master-hamster/parts'
+        };
+        
+        // Asset loader function
+        function createAssetLoader(characterPath) {
+            return async (asset, bytes) => {
+                // If asset has bytes, let runtime handle it
+                if (bytes.length > 0) {
+                    return false;
+                }
+                
+                // Handle image assets
+                if (asset.isImage) {
+                    try {
+                        const assetPath = `${characterPath}/${asset.name}.png`;
+                        const response = await fetch(assetPath);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        
+                        // Decode the image and set it on the asset
+                        const image = await rive.decodeImage(uint8Array);
+                        asset.setRenderImage(image);
+                        image.unref();
+                        
+                        return true;
+                    } catch (error) {
+                        console.error(`Failed to load asset: ${asset.name}`, error);
+                        return false;
+                    }
+                }
+                
+                return false;
+            };
+        }
+        
+        // Initialize Rive instance
+        function initializeRive(characterPath) {
+            if (riveInstance) {
+                try {
+                    riveInstance.cleanup();
+                } catch (error) {
+                    console.warn('Cleanup error:', error);
+                }
+            }
+            
+            riveInstance = new rive.Rive({
+                src: 'humanoid-buddies.riv',
+                canvas: document.getElementById('rive-canvas'),
+                layout: new rive.Layout({
+                    fit: rive.Fit.Contain,
+                    alignment: rive.Alignment.Center,
+                }),
+                autoplay: true,
+                animations: ['gesture_wave'],
+                assetLoader: createAssetLoader(characterPath),
+                onLoad: () => {
+                    riveInstance.resizeDrawingSurfaceToCanvas();
+                    console.log(`Loaded character: ${currentCharacter}`);
+                },
+                onLoadError: (error) => {
+                    console.error('Failed to load Rive file:', error);
+                }
+            });
+        }
+        
+        // Switch character function
+        function switchCharacter(characterId) {
+            if (characterId === currentCharacter) return;
+            
+            currentCharacter = characterId;
+            
+            // Reinitialize Rive with new character assets
+            initializeRive(characters[characterId]);
+        }
+        
+        // Add dropdown event listener
+        document.getElementById('character-select').addEventListener('change', (event) => {
+            switchCharacter(event.target.value);
+        });
+        
+        // Initialize with first character
+        initializeRive(characters[currentCharacter]);
+    </script>
+</body>
+</html>
