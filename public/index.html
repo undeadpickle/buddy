@@ -76,9 +76,9 @@
         
         // Character asset mappings
         const characters = {
-            'cat-dog-orange': 'assets/buddies/cat-dog-orange/parts',
-            'kitten-ninja': 'assets/buddies/kitten-ninja/parts',
-            'master-hamster': 'assets/buddies/master-hamster/parts'
+            'cat-dog-orange': 'assets/characters/cat-dog-orange/parts',
+            'kitten-ninja': 'assets/characters/kitten-ninja/parts',
+            'master-hamster': 'assets/characters/master-hamster/parts'
         };
         
         // Asset loader function
@@ -124,7 +124,7 @@
             }
             
             riveInstance = new rive.Rive({
-                src: 'humanoid-buddies.riv',
+                src: 'assets/rive/humanoid-buddies.riv',
                 canvas: document.getElementById('rive-canvas'),
                 layout: new rive.Layout({
                     fit: rive.Fit.Contain,
