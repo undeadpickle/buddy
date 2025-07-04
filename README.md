@@ -27,7 +27,7 @@ A simple web application for testing animated buddy characters using Rive animat
 - Each character shares the same skeletal rig system
 - PNG parts (head, torso, arms, etc.) swap dynamically
 - Consistent naming convention across all character assets
-- **CDN-First Loading**: Assets served from GitHub Pages CDN with automatic fallback to local assets
+- **CDN-First Loading**: Assets served from GitHub Pages CDN with automatic local fallback
 - **Performance Monitoring**: Console logs show load times and CDN vs fallback usage
 
 ## Getting Started
@@ -63,20 +63,15 @@ http://localhost:8000/
 
 ```
 buddy/
-├── public/                 # Web application files
+├── public/                 # Web application files (served via GitHub Pages CDN)
 │   ├── assets/
 │   │   ├── rive/          # Rive animation files
 │   │   │   └── humanoid-buddies.riv
-│   │   └── characters/    # Character PNG assets (local fallback)
+│   │   └── characters/    # Character PNG assets
 │   │       ├── cat-dog-orange/
 │   │       ├── kitten-ninja/
 │   │       └── master-hamster/
 │   └── index.html         # Main application with CDN integration
-├── buddy-assets-cdn/      # CDN repository (GitHub Pages)
-│   ├── cat-dog-orange/    # Character assets hosted on CDN
-│   ├── kitten-ninja/
-│   ├── master-hamster/
-│   └── index.html         # CDN directory listing
 ├── src/                   # Source code (for future development)
 ├── docs/                  # Documentation and screenshots
 ├── CLAUDE.md             # AI assistant context
@@ -85,25 +80,17 @@ buddy/
 
 ## CDN Configuration
 
-### Asset Hosting
-- **CDN URL**: `https://undeadpickle.github.io/buddy-assets-cdn/`
-- **Repository**: `https://github.com/undeadpickle/buddy-assets-cdn`
-- **Hosting**: GitHub Pages (free, reliable CDN)
+- **CDN URL**: `https://undeadpickle.github.io/buddy/public/assets/characters/`
+- **Hosting**: GitHub Pages (main repository)
 - **Fallback**: Automatic fallback to local assets if CDN fails
+- **Monitoring**: Console logs show load times and CDN vs fallback usage
 
 ### Testing CDN Functionality
-1. Open browser developer tools (F12)
-2. Go to Console tab to monitor asset loading
-3. Look for logs showing CDN vs fallback usage:
-   - `usedFallback: false` = Assets loaded from CDN
-   - `usedFallback: true` = Assets loaded from local fallback
-4. Check Network tab to verify assets loading from GitHub Pages
-
-### Performance Monitoring
-- Console logs show load times for each asset
-- File sizes logged for performance analysis
-- CDN vs fallback usage clearly indicated
-- Character switch timing tracked
+1. Open browser developer tools (F12) → Console tab
+2. Look for asset loading logs:
+   - `usedFallback: false` = Assets loaded from CDN ✅
+   - `usedFallback: true` = Using local fallback
+3. Check Network tab to verify GitHub Pages requests
 
 ## Development
 
@@ -111,15 +98,13 @@ buddy/
 - Each character folder contains identical PNG part names
 - Standard resolution only (no @2x, @3x variants used)
 - Parts include: head, torso, arms, legs, eyes, tail, etc.
-- Assets maintained in both CDN and local folders
 
 ### Adding New Characters
-1. Create a new character folder in `public/assets/characters/` (local fallback)
-2. Create matching folder in `buddy-assets-cdn/` repository (CDN)
-3. Add PNG files with matching names to existing characters in both locations
-4. Update the `characters` and `localCharacters` objects in `index.html`
-5. Add new option to the dropdown select
-6. Commit and push CDN changes to GitHub
+1. Create character folder in `public/assets/characters/`
+2. Add PNG files with matching names to existing characters
+3. Update `characters` and `localCharacters` objects in `index.html`
+4. Add new option to the dropdown select
+5. Commit and push to enable CDN hosting
 
 ## Browser Support
 - Modern browsers that support ES6+ features

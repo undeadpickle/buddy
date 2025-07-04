@@ -19,7 +19,7 @@ This is a simple MVP web application for testing buddy characters using Rive ani
 
 ### Asset Loading Strategy
 - PNG files marked as "Referenced" in Rive editor
-- **CDN Hosting**: Assets served from GitHub Pages CDN at `https://undeadpickle.github.io/buddy-assets-cdn/`
+- **CDN Hosting**: Assets served from GitHub Pages CDN at `https://undeadpickle.github.io/buddy/public/assets/characters/`
 - **Smart Fallback**: Automatically falls back to local assets if CDN fails
 - Asset loader handles dynamic PNG loading at runtime with performance tracking
 - Standard resolution only (no @2x, @3x loading currently used)
@@ -54,23 +54,19 @@ python3 -m http.server 8001 -d public
 ## File Structure
 ```
 buddy/
-├── public/           # Web assets
+├── public/           # Web assets (served via GitHub Pages CDN)
 │   ├── assets/
 │   │   ├── rive/     # Rive animation files
-│   │   └── characters/ # Character PNG assets (local fallback)
+│   │   └── characters/ # Character PNG assets
 │   └── index.html    # Main application with CDN integration
-├── buddy-assets-cdn/ # CDN repository (GitHub Pages)
-│   ├── cat-dog-orange/
-│   ├── kitten-ninja/
-│   ├── master-hamster/
-│   └── index.html    # CDN directory listing
 ├── src/              # Source code (for future development)
 ├── docs/             # Documentation and screenshots
 └── README.md         # Project documentation
 ```
 
 ## CDN Configuration
-- **CDN URL**: `https://undeadpickle.github.io/buddy-assets-cdn/`
-- **Asset Repository**: `https://github.com/undeadpickle/buddy-assets-cdn`
+- **CDN URL**: `https://undeadpickle.github.io/buddy/public/assets/characters/`
+- **Repository**: `https://github.com/undeadpickle/buddy` (main repository)
+- **Hosting**: GitHub Pages enabled on main branch
 - **Fallback Strategy**: Automatic fallback to local assets if CDN fails
 - **Performance Tracking**: Console logs show CDN vs fallback usage and load times
